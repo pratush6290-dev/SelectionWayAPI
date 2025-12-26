@@ -63,7 +63,7 @@ async function syncData() {
 }
 
 // Har 30 minute mein auto-update hoga
-cron.schedule('*/30 * * * *', syncData);
+cron.schedule('*/2 * * * *', syncData);
 
 // --- 4. API ROUTES ---
 
@@ -97,3 +97,4 @@ app.listen(PORT, () => {
     syncData(); // Pehli baar server start hote hi sync karein
 
 });
+
