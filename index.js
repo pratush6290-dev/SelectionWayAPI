@@ -8,9 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- 1. MONGODB CONNECTION ---
-// APNA ATLAS LINK YAHAN DALEIN
-const MONGO_URL = "mongodb+srv://kumarm2552_db_user:mukeshkumar@cluster0.zh9vya3.mongodb.net/?appName=Cluster0";
+// Ab ye Render ke "Environment Variables" se password uthayega
+const MONGO_URL = process.env.MONGO_URL;
 
 mongoose.connect(MONGO_URL)
     .then(() => console.log("🚀 MongoDB Connected Successfully!"))
@@ -96,4 +95,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`✅ Server is running on http://localhost:${PORT}`);
     syncData(); // Pehli baar server start hote hi sync karein
+
 });
