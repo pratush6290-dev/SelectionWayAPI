@@ -1,35 +1,31 @@
-// --- Home Page Route ---
-app.get('/', (req, res) => {
-    res.json({
-        message: "🚀 SelectionWay API is Live and Running!",
-        status: "Healthy",
-        sync_interval: "Every 2-5 minutes",
-        endpoints: {
-            all_batches: "/allbatch",
-            force_sync: "/force-sync",
-            batch_details: "/chapter/[batch_id]"
-        },
-        author: "SelectionWay Team"
-    });
-});
+// ==========================================
+// 1. LIBRARIES (Sabse upar)
+// ==========================================
 const express = require('express');
 const mongoose = require('mongoose');
 const axios = require('axios');
 const cron = require('node-cron');
 const cors = require('cors');
 
+// ==========================================
+// 2. APP INITIALIZATION & MIDDLEWARE
+// ==========================================
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Ab ye Render ke "Environment Variables" se password uthayega
+// ==========================================
+// 3. DATABASE CONNECTION (MongoDB Atlas)
+// ==========================================
 const MONGO_URL = process.env.MONGO_URL;
 
 mongoose.connect(MONGO_URL)
     .then(() => console.log("🚀 MongoDB Connected Successfully!"))
     .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// --- 2. DATABASE STRUCTURE (Schema) ---
+// ==========================================
+// 4. DATABASE STRUCTURE (Schema)
+// ==========================================
 const BatchSchema = new mongoose.Schema({
     id: { type: String, unique: true },
     title: String,
@@ -41,7 +37,9 @@ const BatchSchema = new mongoose.Schema({
 
 const Batch = mongoose.model('Batch', BatchSchema);
 
-// --- 3. AUTO-SYNC LOGIC (Live Save) ---
+// ==========================================
+// 5. AUTO-SYNC LOGIC (Live Backup Function)
+// ==========================================
 const SOURCE_API = "https://selectionway.examsaathi.site";
 
 async function syncData() {
@@ -76,12 +74,40 @@ async function syncData() {
     }
 }
 
-// Har 30 minute mein auto-update hoga
-cron.schedule('*/1 * * * *', syncData);
+// CRON JOB: Har 2-5 minute mein update karne ke liye (Aapne 1 min set kiya hai)
+cron.schedule('*/2 * * * *', syncData);
 
-// --- 4. API ROUTES ---
+// ==========================================
+// 6. API ROUTES (Address)
+// ==========================================
 
-// Saare batches ke liye: http://localhost:3000/allbatch
+// --- A. Home Page Route ---
+app.get('/', (req, res) => {
+    res.json({
+        message: "🚀 SelectionWay API is Live and Running!",
+        status: "Healthy",
+        sync_interval: "Every 2-5 minutes",
+        endpoints: {
+            all_batches: "/allbatch",
+            force_sync: "/force-sync",
+            batch_details: "/chapter/[batch_id]",
+            pdf_details: "/pdf/[batch_id]"
+        },
+        author: "SelectionWay Team"
+    });
+});
+
+// --- B. Manual Sync Trigger (Force Sync) ---
+app.get('/force-sync', async (req, res) => {
+    try {
+        await syncData();
+        res.json({ success: true, message: "Sync successful! Data updated." });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// --- C. All Batches Route ---
 app.get('/allbatch', async (req, res) => {
     try {
         const data = await Batch.find({}, { lectures: 0, pdfs: 0 }); 
@@ -91,26 +117,33 @@ app.get('/allbatch', async (req, res) => {
     }
 });
 
-// Lectures ke liye: http://localhost:3000/chapter/ID
+// --- D. Lectures/Chapter Route ---
 app.get('/chapter/:id', async (req, res) => {
-    const batch = await Batch.findOne({ id: req.params.id });
-    if (batch) res.json({ success: true, classes: batch.lectures });
-    else res.json({ success: false, message: "Not found" });
+    try {
+        const batch = await Batch.findOne({ id: req.params.id });
+        if (batch) res.json({ success: true, classes: batch.lectures });
+        else res.json({ success: false, message: "Batch not found" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
-// PDFs ke liye: http://localhost:3000/pdf/ID
+// --- E. PDFs Route ---
 app.get('/pdf/:id', async (req, res) => {
-    const batch = await Batch.findOne({ id: req.params.id });
-    if (batch) res.json({ success: true, topics: batch.pdfs });
-    else res.json({ success: false, message: "Not found" });
+    try {
+        const batch = await Batch.findOne({ id: req.params.id });
+        if (batch) res.json({ success: true, topics: batch.pdfs });
+        else res.json({ success: false, message: "PDFs not found" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
+// ==========================================
+// 7. SERVER START (Sabse niche)
+// ==========================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server is running on http://localhost:${PORT}`);
     syncData(); // Pehli baar server start hote hi sync karein
-
 });
-
-
-
