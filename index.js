@@ -93,7 +93,7 @@ app.get('/', (req, res) => {
             batch_details: "/chapter/[batch_id]",
             pdf_details: "/pdf/[batch_id]"
         },
-        author: "SelectionWay Team"
+        author: "𓍯𝐆𝐮𝐩𝐭𝐚✿"
     });
 });
 
@@ -147,3 +147,4 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server is running on http://localhost:${PORT}`);
     syncData(); // Pehli baar server start hote hi sync karein
 });
+
